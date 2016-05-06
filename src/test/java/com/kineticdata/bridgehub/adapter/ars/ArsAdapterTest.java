@@ -31,7 +31,7 @@ public class ArsAdapterTest extends BridgeAdapterTestBase {
     public void test_invalidBridgeConfiguration() {
         BridgeError error = null;
         
-        Map<String,String> invalidConfiguration = new LinkedHashMap<>();
+        Map<String,String> invalidConfiguration = new LinkedHashMap<String,String>();
         invalidConfiguration.put("Username", "aUsername");
         invalidConfiguration.put("Password", "super-secret-password");
         invalidConfiguration.put("Server","emu.kineticdata.com");

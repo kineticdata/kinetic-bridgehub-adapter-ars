@@ -244,7 +244,7 @@ public class ArsAdapter implements BridgeAdapter {
         // Retrieve the field map
         FieldMap fieldMap = getFieldMap(request.getStructure());
         // Build the sort fields
-        LinkedHashMap<String,String> sortFields = new LinkedHashMap<>();
+        LinkedHashMap<String,String> sortFields = new LinkedHashMap<String,String>();
         if (metadata.get("order") == null) {
             if (includedFieldIds != null) {
                 for (String fieldName : request.getFields()) {
@@ -300,7 +300,7 @@ public class ArsAdapter implements BridgeAdapter {
         }
 
         // Build the records objects
-        List<Record> records = new ArrayList<>();
+        List<Record> records = new ArrayList<Record>();
         for(SimpleEntry entry : entries) {
             // buildAttributesMap returns as a Map<String,String>, but we cast it to a Map<String,Object>
             // so that we can use it in the constructor for Record();
