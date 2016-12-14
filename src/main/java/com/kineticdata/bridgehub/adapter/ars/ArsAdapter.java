@@ -24,6 +24,7 @@ import com.kineticdata.bridgehub.adapter.Record;
 import com.kineticdata.bridgehub.adapter.RecordList;
 import com.kineticdata.commons.v1.config.ConfigurableProperty;
 import com.kineticdata.commons.v1.config.ConfigurablePropertyMap;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,6 +50,20 @@ public class ArsAdapter implements BridgeAdapter {
     
     /** Defines the logger */
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(ArsAdapter.class);
+    
+    /** Adapter version constant. */
+    public static String VERSION;
+    /** Load the properties version from the version.properties file. */
+    static {
+        try {
+            java.util.Properties properties = new java.util.Properties();
+            properties.load(ArsAdapter.class.getResourceAsStream("/"+ArsAdapter.class.getName()+".version"));
+            VERSION = properties.getProperty("version");
+        } catch (IOException e) {
+            logger.warn("Unable to load "+ArsAdapter.class.getName()+" version properties.", e);
+            VERSION = "Unknown";
+        }
+    }
     
     // Define the date formats
     public static final String ARS_DATE_FORMAT = "MM/dd/yyyy HH:mm:ss";
@@ -91,7 +106,7 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public String getVersion() {
-       return  "1.0.0";
+       return  VERSION;
     }
     
     @Override
@@ -165,11 +180,6 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public Count count(BridgeRequest request) throws BridgeError {
-        // Log the access
-        logger.debug("Counting Ars Records:");
-        logger.debug("  Structure: " + request.getStructure());
-        logger.debug("  Query: " + request.getQuery());
-
         // Build the qualification
         String qualification = buildQualification(request.getQuery(), request.getParameters());
         
@@ -191,12 +201,6 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public Record retrieve(BridgeRequest request) throws BridgeError {
-        // Log the access
-        logger.debug("Retrieving Ars Record:");
-        logger.debug("  Structure: "+ request.getStructure());
-        logger.debug("  Query: "+ request.getQuery());
-        logger.debug("  Fields: "+ request.getFieldString());
-
         // Build the qualification
         String qualification = buildQualification(request.getQuery(), request.getParameters());
         
@@ -224,12 +228,6 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public RecordList search(BridgeRequest request) throws BridgeError {
-        // Log the access
-        logger.debug("Searching Ars Records:");
-        logger.debug("  Structure: "+ request.getStructure());
-        logger.debug("  Query: "+ request.getQuery());
-        logger.debug("  Fields: "+ request.getFieldString());
-
         Map<String,String> metadata = BridgeUtils.normalizePaginationMetadata(request.getMetadata());
 
         // Build the qualification
@@ -245,7 +243,7 @@ public class ArsAdapter implements BridgeAdapter {
         FieldMap fieldMap = getFieldMap(request.getStructure());
         // Build the sort fields
         LinkedHashMap<String,String> sortFields = new LinkedHashMap<String,String>();
-        if (metadata.get("order") == null) {
+        if (request.getMetadata("order") == null) {
             if (includedFieldIds != null) {
                 for (String fieldName : request.getFields()) {
                     Field field = fieldMap.getField(fieldName);
@@ -267,7 +265,7 @@ public class ArsAdapter implements BridgeAdapter {
             }
         } else {
             // For each of the order items
-            for (Map.Entry<String,String> entry : BridgeUtils.parseOrder(metadata.get("order")).entrySet()) {
+            for (Map.Entry<String,String> entry : BridgeUtils.parseOrder(request.getMetadata("order")).entrySet()) {
                 String fieldId = fieldMap.getFieldId(entry.getKey());
                 if (fieldId == null) {
                     throw new BridgeError("The specified sort field does not exist on the '"+
