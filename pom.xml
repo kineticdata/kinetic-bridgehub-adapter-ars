@@ -17,6 +17,10 @@
           <id>com.kineticdata</id>
           <url>http://utilities.kineticdata.com/nexus/content/repositories/releases/</url>
         </repository>
+        <repository>
+          <id>thirdparty</id>
+          <url>http://utilities.kineticdata.com/nexus/content/repositories/thirdparty</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -26,14 +30,20 @@
             <version>1.0.3</version>
         </dependency>
         <dependency>
-            <groupId>com.kineticdata.ars</groupId>
-            <artifactId>kdi_arshelpers</artifactId>
-            <version>2.0.6</version>
+            <groupId>com.kineticdata</groupId>
+            <artifactId>ars-helpers</artifactId>
+            <version>3.0.0</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.bmc</groupId>
+                    <artifactId>arsys</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
-            <groupId>com.bmc.arsys</groupId>
-            <artifactId>arapi80</artifactId>
-            <version>build001</version>
+            <groupId>com.bmc</groupId>
+            <artifactId>arapi</artifactId>
+            <version>8.0.0.build001</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -123,45 +133,6 @@
                     <!-- Allow the project to be built even if tests are failing. -->
                     <testFailureIgnore>true</testFailureIgnore>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.2</version>
-                <executions>
-                    <execution>
-                        <id>install-ar-api</id>
-                        <phase>clean</phase>
-                        <configuration>
-                            <file>${basedir}/lib/arapi80-build001.jar</file>
-                            <repositoryLayout>default</repositoryLayout>
-                            <groupId>com.bmc.arsys</groupId>
-                            <artifactId>arapi80</artifactId>
-                            <version>build001</version>
-                            <packaging>jar</packaging>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>install-ars-helper</id>
-                        <phase>clean</phase>
-                        <configuration>
-                            <file>${basedir}/lib/kdi_arshelpers-2.0.6.jar</file>
-                            <repositoryLayout>default</repositoryLayout>
-                            <groupId>com.kineticdata.ars</groupId>
-                            <artifactId>kdi_arshelpers</artifactId>
-                            <version>2.0.6</version>
-                            <packaging>jar</packaging>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
         <finalName>${project.artifactId}-${project.version}</finalName>
