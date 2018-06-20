@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -86,6 +87,7 @@ public class ArsAdapter implements BridgeAdapter {
         public static final String SERVER = "Server";
         public static final String PORT = "Port";
         public static final String PROGNUM = "Prognum";
+        public static final String SESSION_LENGTH = "Session Timeout (in Minutes)";
     }
     
     private final ConfigurablePropertyMap properties = new ConfigurablePropertyMap(
@@ -93,8 +95,12 @@ public class ArsAdapter implements BridgeAdapter {
             new ConfigurableProperty(Properties.PASSWORD).setIsSensitive(true),
             new ConfigurableProperty(Properties.SERVER).setValue("127.0.0.1").setIsRequired(true),
             new ConfigurableProperty(Properties.PORT).setValue("0"),
-            new ConfigurableProperty(Properties.PROGNUM).setValue("0")
+            new ConfigurableProperty(Properties.PROGNUM).setValue("0"),
+            new ConfigurableProperty(Properties.SESSION_LENGTH).setIsRequired(false)
     );
+    
+    private long sessionStart;
+    private Long sessionLength;
     
     /*---------------------------------------------------------------------------------------------
      * SETUP METHODS
@@ -127,6 +133,10 @@ public class ArsAdapter implements BridgeAdapter {
         String server = properties.getValue(Properties.SERVER);
         String portString = properties.getValue(Properties.PORT);
         String prognumString = properties.getValue(Properties.PROGNUM);
+        
+        // Set the session length if it was included
+        String sessionLengthStr = properties.getValue(Properties.SESSION_LENGTH);
+        sessionLength = (sessionLengthStr == null || sessionLengthStr.isEmpty()) ? null : Long.valueOf(sessionLengthStr);
 
         // Default the configuration values
         int port = 0;
@@ -172,6 +182,8 @@ public class ArsAdapter implements BridgeAdapter {
         } catch (Exception e) {
             throw new BridgeError("Invalid bridge configuration.", e);
         }
+        
+        this.sessionStart = System.nanoTime();
     }
     
     /*---------------------------------------------------------------------------------------------
@@ -180,6 +192,8 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public Count count(BridgeRequest request) throws BridgeError {
+        if (isSessionExpired()) initialize();
+        
         // Build the qualification
         String qualification = buildQualification(request.getQuery(), request.getParameters());
         
@@ -201,6 +215,8 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public Record retrieve(BridgeRequest request) throws BridgeError {
+        if (isSessionExpired()) initialize();
+        
         // Build the qualification
         String qualification = buildQualification(request.getQuery(), request.getParameters());
         
@@ -228,6 +244,8 @@ public class ArsAdapter implements BridgeAdapter {
     
     @Override
     public RecordList search(BridgeRequest request) throws BridgeError {
+        if (isSessionExpired()) initialize();
+        
         Map<String,String> metadata = BridgeUtils.normalizePaginationMetadata(request.getMetadata());
 
         // Build the qualification
@@ -447,5 +465,11 @@ public class ArsAdapter implements BridgeAdapter {
         public List<String> getFieldNames() {
             return new ArrayList<String>(nameToIdMap.keySet());
         }
+    }
+    
+    private boolean isSessionExpired() {
+        if (this.sessionLength == null) return false;
+        long timeElapsed = TimeUnit.MINUTES.convert(System.nanoTime()-this.sessionStart, TimeUnit.NANOSECONDS);
+        return timeElapsed > sessionLength;
     }
 }
